@@ -1,5 +1,9 @@
 # graph-lending-mcp
 
+<a href="https://glama.ai/mcp/servers/@PaulieB14/graph-lending-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@PaulieB14/graph-lending-mcp/badge" />
+</a>
+
 MCP server that exposes unified AI-friendly tools over [Messari's standardized lending subgraphs](https://github.com/messari/subgraphs) on [The Graph](https://thegraph.com/).
 
 One natural-language query → fan out across 40+ lending protocols on multiple chains → get back structured, comparable data.
