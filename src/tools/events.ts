@@ -1,4 +1,4 @@
-import { lookup } from "../registry.js";
+import { lookup, schemaAtLeast } from "../registry.js";
 import { request } from "../client.js";
 
 function formatTimestamp(ts: string): string {
@@ -193,6 +193,10 @@ export async function getFlashloans(args: {
 }) {
   const entries = lookup(args.protocol, args.network);
   const entry = entries[0];
+
+  if (!schemaAtLeast(entry, "3.0.0")) {
+    return { content: [{ type: "text" as const, text: `Flashloans are not available for ${args.protocol} (schema ${entry.schemaVersion} — requires v3.0.0+)` }] };
+  }
 
   const query = `query Q($first: Int!) {
     flashloans(first: $first, orderBy: timestamp, orderDirection: desc) {

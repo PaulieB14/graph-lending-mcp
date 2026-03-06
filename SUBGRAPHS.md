@@ -86,7 +86,7 @@ Last tested: 2026-03-06
 ### Burrow
 | Slug | Network | Schema | Status | TVL | Notes |
 |------|---------|--------|--------|-----|-------|
-| burrow-near | NEAR | 2.0.1 | LIVE | $60.9B | TVL appears inflated — verify |
+| burrow-near | NEAR | 2.0.1 | LIVE | $60.9B | **TVL inflated** — likely token price/decimal bug in subgraph. Real TVL ~$50M per DeFiLlama. Data queries work but USD values unreliable. |
 
 ### Compound v2
 | Slug | Network | Schema | Status | TVL | Notes |

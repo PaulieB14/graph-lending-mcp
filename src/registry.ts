@@ -58,6 +58,7 @@ export const REGISTRY: Record<string, SubgraphEntry[]> = {
     { slug: "benqi-avalanche", network: "AVALANCHE", subgraphId: "8ZjJGsaKea7WwLJPJNdHXPGsvXDe3iq2231aRjgBPisi", schemaVersion: "2.0.1" },
   ],
   "burrow": [
+    // NOTE: TVL data appears inflated (~$60B) — likely a token price or decimal issue in the subgraph
     { slug: "burrow-near", network: "NEAR", subgraphId: "5W5fhZAq6QABBijKo7wqYps7TLzqAqS2mU1C1rhktvtg", schemaVersion: "2.0.1" },
   ],
   "compound-v2": [

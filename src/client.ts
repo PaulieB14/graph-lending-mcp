@@ -81,27 +81,66 @@ export async function fetchMarkets(
   return data.markets ?? [];
 }
 
+/** Single request with short timeout and no retries — used by fanOut */
+async function requestFast<T = any>(
+  entry: SubgraphEntry,
+  query: string,
+  variables?: Record<string, unknown>
+): Promise<T> {
+  const url = gatewayUrl(entry.subgraphId);
+  const body: Record<string, unknown> = { query };
+  if (variables && Object.keys(variables).length > 0) body.variables = variables;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(6_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const json = (await response.json()) as { data?: T; errors?: unknown[] };
+  if (json.errors?.length) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+  return json.data as T;
+}
+
+const FAN_OUT_CONCURRENCY = 15;
+
 export async function fanOut<T>(
   entries: { protocol: string; entry: SubgraphEntry }[],
   query: string,
   variables?: Record<string, unknown>
 ): Promise<Array<{ protocol: string; slug: string; data?: T; error?: string }>> {
-  const results = await Promise.allSettled(
-    entries.map(({ protocol, entry }) =>
-      request<T>(entry, query, variables).then(data => ({
-        protocol,
-        slug: entry.slug,
-        data,
-      }))
-    )
-  );
-  return results.map((r, i) =>
-    r.status === "fulfilled"
-      ? r.value
-      : {
-          protocol: entries[i].protocol,
-          slug: entries[i].entry.slug,
-          error: String(r.reason),
-        }
-  );
+  type Result = { protocol: string; slug: string; data?: T; error?: string };
+  const results: Result[] = new Array(entries.length);
+
+  // Process in batches to avoid overwhelming the gateway
+  for (let i = 0; i < entries.length; i += FAN_OUT_CONCURRENCY) {
+    const batch = entries.slice(i, i + FAN_OUT_CONCURRENCY);
+    const batchResults = await Promise.allSettled(
+      batch.map(({ protocol, entry }) =>
+        requestFast<T>(entry, query, variables).then(data => ({
+          protocol,
+          slug: entry.slug,
+          data,
+        }))
+      )
+    );
+    for (let j = 0; j < batchResults.length; j++) {
+      const r = batchResults[j];
+      results[i + j] = r.status === "fulfilled"
+        ? r.value
+        : {
+            protocol: batch[j].protocol,
+            slug: batch[j].entry.slug,
+            error: String(r.reason),
+          };
+    }
+  }
+  return results;
 }
