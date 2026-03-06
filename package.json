@@ -1,13 +1,17 @@
 {
   "name": "graph-lending-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server exposing unified tools over Messari standardized lending subgraphs",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "graph-lending-mcp": "dist/index.js"
   },
-  "files": ["dist", "README.md", "SUBGRAPHS.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "SUBGRAPHS.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/PaulieB14/graph-lending-mcp.git"
@@ -18,7 +22,13 @@
     "dev": "tsc --watch",
     "prepublishOnly": "tsc"
   },
-  "keywords": ["mcp", "graph", "lending", "subgraph", "defi"],
+  "keywords": [
+    "mcp",
+    "graph",
+    "lending",
+    "subgraph",
+    "defi"
+  ],
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
