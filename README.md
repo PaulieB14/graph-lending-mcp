@@ -8,6 +8,10 @@ MCP server that exposes unified AI-friendly tools over [Messari's standardized l
 
 One natural-language query → fan out across 40+ lending protocols on multiple chains → get back structured, comparable data.
 
+<a href="https://glama.ai/mcp/servers/@PaulieB14/graph-lending-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@PaulieB14/graph-lending-mcp/badge" alt="graph-lending-mcp MCP server" />
+</a>
+
 ## Features
 
 - **19 MCP tools** covering protocols, markets, rates, positions, events, snapshots, and cross-protocol analytics
