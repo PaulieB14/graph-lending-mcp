@@ -222,4 +222,8 @@ app.post("/api/compare", async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.listen(PORT, () => console.log(`Dashboard at http://localhost:${PORT}`));
+// Local dev: listen. Vercel: export the app.
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`Dashboard at http://localhost:${PORT}`));
+}
+export default app;
