@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeFi Lending Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #242836; --border: #2d3148;
+    --text: #e1e4eb; --text2: #8b90a0; --accent: #6366f1; --accent2: #818cf8;
+    --green: #22c55e; --red: #ef4444; --yellow: #eab308; --blue: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+  .nav { display: flex; flex-wrap: wrap; gap: 2px; background: var(--surface); padding: 8px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .nav-btn { background: none; border: none; color: var(--text2); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap; transition: all 0.15s; }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--accent); color: white; }
+  .nav-title { font-weight: 700; font-size: 15px; color: var(--accent2); padding: 8px 14px; margin-right: 8px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .tab { display: none; }
+  .tab.active { display: block; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); margin-bottom: 8px; }
+  .card-value { font-size: 28px; font-weight: 700; }
+  .card-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  tr:hover td { background: var(--surface2); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+  select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  button.btn { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  button.btn:hover { background: var(--accent2); }
+
+  .loading { text-align: center; padding: 40px; color: var(--text2); }
+  .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .badge-network { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #1e2a4a; color: var(--blue); }
+  .positive { color: var(--green); }
+  .negative { color: var(--red); }
+
+  .chart-container { position: relative; height: 300px; }
+  .chart-container canvas { max-height: 300px; }
+  .scroll-table { max-height: 500px; overflow-y: auto; }
+  .tab-desc { color: var(--text2); margin-bottom: 16px; font-size: 13px; }
+
+  .chip-container { display: flex; flex-wrap: wrap; gap: 6px; max-height: 120px; overflow-y: auto; padding: 4px; }
+  .chip { padding: 4px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); transition: all 0.15s; }
+  .chip.selected { background: var(--accent); color: white; border-color: var(--accent); }
+  .chip:hover { border-color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-title">DeFi Lending</span>
+  <button class="nav-btn active" data-tab="overview">Overview</button>
+  <button class="nav-btn" data-tab="protocol">Protocol Detail</button>
+  <button class="nav-btn" data-tab="rates">Interest Rates</button>
+  <button class="nav-btn" data-tab="activity">User Activity</button>
+  <button class="nav-btn" data-tab="compare">Compare</button>
+</nav>
+
+<div class="container">
+
+<!-- 1. OVERVIEW -->
+<div id="tab-overview" class="tab active">
+  <p class="tab-desc">Global view of curated lending protocols. All data uses universal fields that work across every schema version.</p>
+  <div id="overview-stats" class="grid grid-4" style="margin-bottom:16px;"></div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-title">TVL by Protocol (Top 10)</div><div class="chart-container"><canvas id="chart-tvl-protocol"></canvas></div></div>
+    <div class="card"><div class="card-title">TVL by Network</div><div class="chart-container"><canvas id="chart-tvl-network"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">All Protocols</div>
+    <div class="scroll-table table-wrap" id="overview-table"></div>
+  </div>
+</div>
+
+<!-- 2. PROTOCOL DETAIL -->
+<div id="tab-protocol" class="tab">
+  <div class="controls">
+    <select id="proto-select"><option value="">Select protocol...</option></select>
+    <button class="btn" onclick="loadProtocolDetail()">Load</button>
+  </div>
+  <div id="proto-stats" class="grid grid-4" style="margin-bottom:16px;"></div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-title">TVL & Volume (30d)</div><div class="chart-container"><canvas id="chart-proto-tvl"></canvas></div></div>
+    <div class="card"><div class="card-title">Daily Activity (30d)</div><div class="chart-container"><canvas id="chart-proto-activity"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">Markets</div>
+    <div class="scroll-table table-wrap" id="proto-markets"></div>
+  </div>
+</div>
+
+<!-- 3. INTEREST RATES -->
+<div id="tab-rates" class="tab">
+  <div class="controls">
+    <select id="rates-select"><option value="">Select protocol...</option></select>
+    <button class="btn" onclick="loadRates()">Load Rates</button>
+  </div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-title">Rate Comparison</div><div class="chart-container"><canvas id="chart-rates"></canvas></div></div>
+    <div class="card"><div class="card-title">Rate Table</div><div class="scroll-table table-wrap" id="rates-table"></div></div>
+  </div>
+</div>
+
+<!-- 4. USER ACTIVITY -->
+<div id="tab-activity" class="tab">
+  <div class="controls">
+    <select id="usage-select"><option value="">Select protocol...</option></select>
+    <button class="btn" onclick="loadUsage()">Load</button>
+  </div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-title">Daily Active Users</div><div class="chart-container"><canvas id="chart-dau"></canvas></div></div>
+    <div class="card"><div class="card-title">Daily Transactions</div><div class="chart-container"><canvas id="chart-txns"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">Usage Metrics</div>
+    <div class="scroll-table table-wrap" id="usage-table"></div>
+  </div>
+</div>
+
+<!-- 5. COMPARE -->
+<div id="tab-compare" class="tab">
+  <p class="tab-desc">Select 2+ protocols to compare side-by-side.</p>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Select Protocols</div>
+    <div class="chip-container" id="compare-chips"></div>
+  </div>
+  <div class="controls"><button class="btn" onclick="loadComparison()">Compare Selected</button></div>
+  <div class="card"><div class="card-title">TVL Comparison</div><div class="chart-container"><canvas id="chart-compare"></canvas></div></div>
+  <div class="card" style="margin-top:16px;">
+    <div class="scroll-table table-wrap" id="compare-table"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const fmt = n => {
+  n = parseFloat(n) || 0;
+  if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+  return '$' + n.toFixed(0);
+};
+const fmtNum = n => (parseFloat(n) || 0).toLocaleString();
+const fmtPct = n => (parseFloat(n) || 0).toFixed(2) + '%';
+const fmtDate = ts => new Date(ts * 1000).toLocaleDateString();
+const colors = ['#6366f1','#22c55e','#3b82f6','#eab308','#ef4444','#06b6d4','#f97316','#a855f7','#ec4899','#14b8a6','#84cc16','#f43f5e','#8b5cf6','#0ea5e9','#d946ef'];
+const spin = el => { if (el) el.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; };
+
+let registry = [];
+let charts = {};
+const DEFAULT = 'aave-v3';
+const loaded = {};
+
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function makeChart(id, config) { destroyChart(id); const c = document.getElementById(id); if (!c) return; charts[id] = new Chart(c, config); }
+function stat(title, value, sub) { return `<div class="card"><div class="card-title">${title}</div><div class="card-value">${value}</div>${sub ? `<div class="card-sub">${sub}</div>` : ''}</div>`; }
+
+const chartOpts = {
+  line: (yFmt) => ({ responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { color: '#e1e4eb' } } },
+    scales: { x: { ticks: { color: '#8b90a0', maxTicksLimit: 10 }, grid: { color: '#2d3148' } }, y: { ticks: { color: '#8b90a0', callback: yFmt || (v => fmt(v)) }, grid: { color: '#2d3148' } } }
+  }),
+  bar: (stacked, yFmt) => ({ responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#e1e4eb' } } },
+    scales: { x: { stacked, ticks: { color: '#8b90a0', maxTicksLimit: 10 }, grid: { color: '#2d3148' } }, y: { stacked, ticks: { color: '#8b90a0', callback: yFmt || (v => v) }, grid: { color: '#2d3148' } } }
+  }),
+  hbar: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { ticks: { color: '#8b90a0', callback: v => fmt(v) }, grid: { color: '#2d3148' } }, y: { ticks: { color: '#e1e4eb', font: { size: 11 } }, grid: { display: false } } }
+  },
+};
+
+// Tab nav
+$$('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.nav-btn').forEach(b => b.classList.remove('active'));
+    $$('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    $(`#tab-${tab}`).classList.add('active');
+    // auto-load on first visit
+    if (tab === 'overview' && !loaded.overview) loadOverview();
+    if (tab === 'protocol' && !loaded.protocol) loadProtocolDetail();
+    if (tab === 'rates' && !loaded.rates) loadRates();
+    if (tab === 'activity' && !loaded.activity) loadUsage();
+  });
+});
+
+// Init
+async function init() {
+  try {
+    registry = await fetch('/api/registry').then(r => r.json());
+  } catch {
+    document.body.innerHTML = '<div style="padding:40px;color:#ef4444;font-size:18px;">Failed to connect. Make sure server is running.</div>';
+    return;
+  }
+
+  const protocols = [...new Set(registry.map(r => r.protocol))].sort();
+  ['#proto-select','#rates-select','#usage-select'].forEach(sel => {
+    const el = $(sel);
+    if (!el) return;
+    protocols.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; el.appendChild(o); });
+    el.value = DEFAULT;
+  });
+
+  // Compare chips
+  const chips = $('#compare-chips');
+  const pre = ['aave-v3','compound-v3','spark-lend','makerdao','aave-v2'];
+  protocols.forEach(p => {
+    const c = document.createElement('span');
+    c.className = 'chip' + (pre.includes(p) ? ' selected' : '');
+    c.textContent = p;
+    c.onclick = () => c.classList.toggle('selected');
+    chips.appendChild(c);
+  });
+
+  loadOverview();
+}
+
+// 1. OVERVIEW
+async function loadOverview() {
+  spin($('#overview-table'));
+  $('#overview-stats').innerHTML = stat('Loading...', '...', 'Querying subgraphs...');
+  try {
+    const { protocols, live } = await fetch('/api/protocols').then(r => r.json());
+    loaded.overview = true;
+
+    const totalTvl = protocols.reduce((s, p) => s + parseFloat(p.totalValueLockedUSD || 0), 0);
+    const totalUsers = protocols.reduce((s, p) => s + parseInt(p.cumulativeUniqueUsers || 0), 0);
+    const totalPools = protocols.reduce((s, p) => s + parseInt(p.totalPoolCount || 0), 0);
+
+    $('#overview-stats').innerHTML =
+      stat('Total TVL', fmt(totalTvl), `${live} live protocols`) +
+      stat('Unique Users', fmtNum(totalUsers), 'Cumulative') +
+      stat('Total Pools', fmtNum(totalPools), 'All protocols') +
+      stat('Live Protocols', live, 'With data');
+
+    // TVL by protocol bar chart
+    const top10 = protocols.slice(0, 10);
+    makeChart('chart-tvl-protocol', {
+      type: 'bar',
+      data: { labels: top10.map(p => p.slug.replace(/-/g,' ')), datasets: [{ label: 'TVL', data: top10.map(p => parseFloat(p.totalValueLockedUSD||0)), backgroundColor: colors.slice(0,10), borderRadius: 4 }] },
+      options: chartOpts.hbar
+    });
+
+    // TVL by network doughnut
+    const byNet = {};
+    protocols.forEach(p => { const n = p.network||'?'; byNet[n] = (byNet[n]||0) + parseFloat(p.totalValueLockedUSD||0); });
+    const nets = Object.entries(byNet).sort((a,b) => b[1]-a[1]);
+    makeChart('chart-tvl-network', {
+      type: 'doughnut',
+      data: { labels: nets.map(e=>e[0]), datasets: [{ data: nets.map(e=>e[1]), backgroundColor: colors }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#e1e4eb', font: { size: 11 }, padding: 8, boxWidth: 12 } } } }
+    });
+
+    // Table
+    $('#overview-table').innerHTML = `<table>
+      <thead><tr><th>Protocol</th><th>Network</th><th style="text-align:right">TVL</th><th style="text-align:right">Deposits</th><th style="text-align:right">Borrows</th><th style="text-align:right">Users</th><th style="text-align:right">Pools</th></tr></thead>
+      <tbody>${protocols.map(p => `<tr>
+        <td><strong>${p.slug}</strong></td>
+        <td><span class="badge-network">${p.network}</span></td>
+        <td style="text-align:right">${fmt(p.totalValueLockedUSD)}</td>
+        <td style="text-align:right">${fmt(p.totalDepositBalanceUSD)}</td>
+        <td style="text-align:right">${fmt(p.totalBorrowBalanceUSD)}</td>
+        <td style="text-align:right">${fmtNum(p.cumulativeUniqueUsers)}</td>
+        <td style="text-align:right">${p.totalPoolCount}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { $('#overview-table').innerHTML = `<div class="loading" style="color:var(--red);">${e.message}</div>`; }
+}
+
+// 2. PROTOCOL DETAIL
+async function loadProtocolDetail() {
+  const slug = $('#proto-select').value;
+  if (!slug) return;
+  spin($('#proto-markets'));
+  $('#proto-stats').innerHTML = stat('Loading...', '...', slug);
+  try {
+    const [proto, markets, fin] = await Promise.all([
+      fetch(`/api/protocol/${slug}`).then(r => r.json()),
+      fetch(`/api/markets/${slug}?first=50`).then(r => r.json()),
+      fetch(`/api/financials/${slug}?days=30`).then(r => r.json()),
+    ]);
+    loaded.protocol = true;
+
+    $('#proto-stats').innerHTML =
+      stat('TVL', fmt(proto.totalValueLockedUSD)) +
+      stat('Deposits', fmt(proto.totalDepositBalanceUSD)) +
+      stat('Borrows', fmt(proto.totalBorrowBalanceUSD)) +
+      stat('Users', fmtNum(proto.cumulativeUniqueUsers), `${proto.totalPoolCount} pools`);
+
+    // TVL + volume chart
+    const finR = (fin || []).reverse();
+    const dates = finR.map(f => fmtDate(f.timestamp));
+    makeChart('chart-proto-tvl', {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'TVL', data: finR.map(f => parseFloat(f.totalValueLockedUSD||0)), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.3 },
+        { label: 'Daily Deposits', data: finR.map(f => parseFloat(f.dailyDepositUSD||0)), borderColor: '#22c55e', tension: 0.3 },
+        { label: 'Daily Borrows', data: finR.map(f => parseFloat(f.dailyBorrowUSD||0)), borderColor: '#3b82f6', tension: 0.3 },
+      ]},
+      options: chartOpts.line()
+    });
+
+    // Daily liquidations chart
+    makeChart('chart-proto-activity', {
+      type: 'bar',
+      data: { labels: dates, datasets: [
+        { label: 'Daily Deposits', data: finR.map(f => parseFloat(f.dailyDepositUSD||0)), backgroundColor: '#22c55e', borderRadius: 2 },
+        { label: 'Daily Borrows', data: finR.map(f => parseFloat(f.dailyBorrowUSD||0)), backgroundColor: '#3b82f6', borderRadius: 2 },
+        { label: 'Daily Liquidations', data: finR.map(f => parseFloat(f.dailyLiquidateUSD||0)), backgroundColor: '#ef4444', borderRadius: 2 },
+      ]},
+      options: chartOpts.bar(true, v => fmt(v))
+    });
+
+    // Markets table
+    const mks = markets || [];
+    $('#proto-markets').innerHTML = `<table>
+      <thead><tr><th>Market</th><th>Token</th><th style="text-align:right">TVL</th><th style="text-align:right">Deposits</th><th style="text-align:right">Borrows</th><th style="text-align:right">Supply APR</th><th style="text-align:right">Borrow APR</th></tr></thead>
+      <tbody>${mks.map(m => {
+        const sr = m.rates?.find(r => r.side === 'LENDER')?.rate;
+        const br = m.rates?.find(r => r.side === 'BORROWER')?.rate;
+        return `<tr>
+          <td>${m.name || m.id.slice(0,10)}</td>
+          <td>${m.inputToken?.symbol || '?'}</td>
+          <td style="text-align:right">${fmt(m.totalValueLockedUSD)}</td>
+          <td style="text-align:right">${fmt(m.totalDepositBalanceUSD)}</td>
+          <td style="text-align:right">${fmt(m.totalBorrowBalanceUSD)}</td>
+          <td style="text-align:right" class="positive">${sr ? fmtPct(sr) : '--'}</td>
+          <td style="text-align:right" class="negative">${br ? fmtPct(br) : '--'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch(e) { $('#proto-markets').innerHTML = `<div class="loading" style="color:var(--red);">${e.message}</div>`; }
+}
+
+// 3. INTEREST RATES
+async function loadRates() {
+  const slug = $('#rates-select').value;
+  if (!slug) return;
+  spin($('#rates-table'));
+  try {
+    const markets = await fetch(`/api/rates/${slug}`).then(r => r.json());
+    loaded.rates = true;
+
+    const top = markets.slice(0, 15);
+    makeChart('chart-rates', {
+      type: 'bar',
+      data: {
+        labels: top.map(m => m.inputToken?.symbol || '?'),
+        datasets: [
+          { label: 'Supply APR %', data: top.map(m => parseFloat(m.rates?.find(r => r.side==='LENDER')?.rate||0)), backgroundColor: '#22c55e', borderRadius: 3 },
+          { label: 'Borrow APR %', data: top.map(m => parseFloat(m.rates?.find(r => r.side==='BORROWER')?.rate||0)), backgroundColor: '#ef4444', borderRadius: 3 },
+        ]
+      },
+      options: chartOpts.bar(false, v => v + '%')
+    });
+
+    $('#rates-table').innerHTML = `<table>
+      <thead><tr><th>Market</th><th>Token</th><th style="text-align:right">TVL</th><th style="text-align:right">Supply APR</th><th style="text-align:right">Borrow APR</th></tr></thead>
+      <tbody>${markets.map(m => {
+        const sr = m.rates?.find(r => r.side==='LENDER');
+        const br = m.rates?.find(r => r.side==='BORROWER');
+        return `<tr>
+          <td>${m.name || m.id.slice(0,10)}</td>
+          <td>${m.inputToken?.symbol || '?'}</td>
+          <td style="text-align:right">${fmt(m.totalValueLockedUSD)}</td>
+          <td style="text-align:right" class="positive">${sr ? fmtPct(sr.rate) : '--'}</td>
+          <td style="text-align:right" class="negative">${br ? fmtPct(br.rate) : '--'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch(e) { $('#rates-table').innerHTML = `<div class="loading" style="color:var(--red);">${e.message}</div>`; }
+}
+
+// 4. USER ACTIVITY
+async function loadUsage() {
+  const slug = $('#usage-select').value;
+  if (!slug) return;
+  spin($('#usage-table'));
+  try {
+    const data = await fetch(`/api/usage/${slug}?days=30`).then(r => r.json());
+    loaded.activity = true;
+    const snaps = (data || []).reverse();
+    const dates = snaps.map(s => fmtDate(s.timestamp));
+
+    makeChart('chart-dau', {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'Daily Active Users', data: snaps.map(s => parseInt(s.dailyActiveUsers||0)), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.3 },
+        { label: 'Cumulative Users', data: snaps.map(s => parseInt(s.cumulativeUniqueUsers||0)), borderColor: '#22c55e', tension: 0.3, yAxisID: 'y1' },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: '#e1e4eb' } } },
+        scales: {
+          x: { ticks: { color: '#8b90a0', maxTicksLimit: 10 }, grid: { color: '#2d3148' } },
+          y: { position: 'left', ticks: { color: '#8b90a0' }, grid: { color: '#2d3148' } },
+          y1: { position: 'right', ticks: { color: '#22c55e' }, grid: { display: false } },
+        }
+      }
+    });
+
+    makeChart('chart-txns', {
+      type: 'bar',
+      data: { labels: dates, datasets: [
+        { label: 'Deposits', data: snaps.map(s => parseInt(s.dailyDepositCount||0)), backgroundColor: '#22c55e', borderRadius: 2 },
+        { label: 'Borrows', data: snaps.map(s => parseInt(s.dailyBorrowCount||0)), backgroundColor: '#3b82f6', borderRadius: 2 },
+        { label: 'Repays', data: snaps.map(s => parseInt(s.dailyRepayCount||0)), backgroundColor: '#eab308', borderRadius: 2 },
+        { label: 'Liquidations', data: snaps.map(s => parseInt(s.dailyLiquidateCount||0)), backgroundColor: '#ef4444', borderRadius: 2 },
+      ]},
+      options: chartOpts.bar(true)
+    });
+
+    $('#usage-table').innerHTML = `<table>
+      <thead><tr><th>Date</th><th style="text-align:right">Active Users</th><th style="text-align:right">Txns</th><th style="text-align:right">Deposits</th><th style="text-align:right">Borrows</th><th style="text-align:right">Repays</th><th style="text-align:right">Liquidations</th></tr></thead>
+      <tbody>${snaps.map(s => `<tr>
+        <td>${fmtDate(s.timestamp)}</td>
+        <td style="text-align:right">${fmtNum(s.dailyActiveUsers)}</td>
+        <td style="text-align:right">${fmtNum(s.dailyTransactionCount)}</td>
+        <td style="text-align:right">${fmtNum(s.dailyDepositCount)}</td>
+        <td style="text-align:right">${fmtNum(s.dailyBorrowCount)}</td>
+        <td style="text-align:right">${fmtNum(s.dailyRepayCount)}</td>
+        <td style="text-align:right">${fmtNum(s.dailyLiquidateCount)}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { $('#usage-table').innerHTML = `<div class="loading" style="color:var(--red);">${e.message}</div>`; }
+}
+
+// 5. COMPARE
+async function loadComparison() {
+  const selected = [...$$('#compare-chips .chip.selected')].map(c => c.textContent);
+  if (selected.length < 2) { alert('Select at least 2 protocols'); return; }
+  spin($('#compare-table'));
+  try {
+    const data = await fetch('/api/compare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ protocols: selected }) }).then(r => r.json());
+
+    makeChart('chart-compare', {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.slug || d.protocol),
+        datasets: [
+          { label: 'TVL', data: data.map(d => parseFloat(d.totalValueLockedUSD||0)), backgroundColor: '#6366f1', borderRadius: 3 },
+          { label: 'Deposits', data: data.map(d => parseFloat(d.totalDepositBalanceUSD||0)), backgroundColor: '#22c55e', borderRadius: 3 },
+          { label: 'Borrows', data: data.map(d => parseFloat(d.totalBorrowBalanceUSD||0)), backgroundColor: '#3b82f6', borderRadius: 3 },
+        ]
+      },
+      options: chartOpts.bar(false, v => fmt(v))
+    });
+
+    $('#compare-table').innerHTML = `<table>
+      <thead><tr><th>Protocol</th><th>Network</th><th style="text-align:right">TVL</th><th style="text-align:right">Deposits</th><th style="text-align:right">Borrows</th><th style="text-align:right">Users</th><th style="text-align:right">Pools</th></tr></thead>
+      <tbody>${data.map(d => `<tr>
+        <td><strong>${d.slug || d.protocol}</strong></td>
+        <td><span class="badge-network">${d.network}</span></td>
+        <td style="text-align:right">${fmt(d.totalValueLockedUSD)}</td>
+        <td style="text-align:right">${fmt(d.totalDepositBalanceUSD)}</td>
+        <td style="text-align:right">${fmt(d.totalBorrowBalanceUSD)}</td>
+        <td style="text-align:right">${fmtNum(d.cumulativeUniqueUsers)}</td>
+        <td style="text-align:right">${d.totalPoolCount}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { $('#compare-table').innerHTML = `<div class="loading" style="color:var(--red);">${e.message}</div>`; }
+}
+
+init().catch(e => console.error('Init failed:', e));
+</script>
+</body>
+</html>
