@@ -46,7 +46,11 @@
   .loading { text-align: center; padding: 40px; color: var(--text2); }
   .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .badge-network { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #1e2a4a; color: var(--blue); }
+  .badge-network { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #1e2a4a; color: var(--blue); }
+  .icon { width: 16px; height: 16px; vertical-align: middle; border-radius: 50%; }
+  .icon-sm { width: 14px; height: 14px; }
+  .icon-lg { width: 20px; height: 20px; }
+  .token-cell { display: flex; align-items: center; gap: 6px; }
   .positive { color: var(--green); }
   .negative { color: var(--red); }
 
@@ -67,14 +71,10 @@
   .guide-hero p { color: var(--text2); font-size: 15px; max-width: 600px; margin: 0 auto; }
   .guide-section { margin-bottom: 24px; }
   .guide-section h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-  .guide-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-  .guide-item h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .guide-item p { font-size: 12px; color: var(--text2); line-height: 1.5; }
-  .proto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
-  .proto-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
-  .proto-item .name { font-size: 13px; font-weight: 600; }
-  .proto-item .net { font-size: 11px; color: var(--text2); }
+  .net-group { margin-bottom: 16px; }
+  .net-group h3 { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
+  .net-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .net-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 500; }
   .guide-enter { margin-top: 32px; text-align: center; }
   .guide-enter button { font-size: 16px; padding: 14px 40px; border-radius: 10px; }
 </style>
@@ -97,104 +97,28 @@
 <div id="tab-guide" class="tab active">
   <div class="guide-hero">
     <h1>DeFi <span>Lending</span> Dashboard</h1>
-    <p>Real-time data from 26 lending protocols across 8 networks, powered by The Graph's decentralized subgraphs using the Messari standardized schema.</p>
+    <p>Live data from 26 lending protocols across 8 networks via The Graph.</p>
   </div>
 
-  <div class="guide-section">
-    <h2>Dashboard Tabs</h2>
-    <div class="guide-grid">
-      <div class="guide-item">
-        <h3>Overview</h3>
-        <p>Aggregated stats across all protocols: total TVL, users, pools. Bar chart of top protocols by TVL, network distribution doughnut, and a sortable table of every protocol.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Protocol Detail</h3>
-        <p>Deep-dive into a single protocol. 30-day TVL trend, daily deposit/borrow/liquidation volume, and a full list of that protocol's lending markets with current rates.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Interest Rates</h3>
-        <p>Compare supply and borrow APRs across all markets within a protocol. See which assets offer the best yield or cheapest borrowing costs.</p>
-      </div>
-      <div class="guide-item">
-        <h3>User Activity</h3>
-        <p>30-day usage metrics: daily active users, cumulative users, and transaction breakdowns (deposits, borrows, repays, liquidations).</p>
-      </div>
-      <div class="guide-item">
-        <h3>Compare</h3>
-        <p>Side-by-side comparison of 2+ protocols. TVL, deposits, borrows, users, and pool counts charted together for easy evaluation.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="guide-section">
-    <h2>Glossary</h2>
-    <div class="guide-grid">
-      <div class="guide-item">
-        <h3>TVL (Total Value Locked)</h3>
-        <p>The total USD value of assets deposited into a protocol's smart contracts. The primary measure of a protocol's size.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Total Deposits</h3>
-        <p>USD value of all assets supplied by lenders. Lenders earn interest on deposits from borrowers.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Total Borrows</h3>
-        <p>USD value of all outstanding loans. Borrowers pay interest and must maintain collateral above liquidation thresholds.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Supply APR</h3>
-        <p>Annual percentage rate earned by lenders (depositors). Shown as the LENDER-side variable rate from the subgraph.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Borrow APR</h3>
-        <p>Annual percentage rate paid by borrowers. Shown as the BORROWER-side variable rate. Higher = more expensive to borrow.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Liquidation</h3>
-        <p>When a borrower's collateral value falls below the required threshold, anyone can repay part of the debt and claim collateral at a discount.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Market</h3>
-        <p>A single lending pool for one asset (e.g., "Aave V3 USDC on Ethereum"). Each market has its own rates, TVL, and risk parameters.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Daily Active Users</h3>
-        <p>Unique wallet addresses that interacted with the protocol (deposit, borrow, repay, or liquidate) in a given day.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="guide-section">
-    <h2>Protocols Covered</h2>
-    <p style="color:var(--text2);font-size:13px;margin-bottom:12px;">Curated set of live subgraphs with >$1M TVL. Data sourced via The Graph Gateway.</p>
-    <div class="proto-grid" id="guide-protocols"></div>
-  </div>
-
-  <div class="guide-section">
-    <h2>Networks</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;" id="guide-networks"></div>
-  </div>
-
-  <div class="guide-section">
-    <h2>Data Source</h2>
-    <div class="guide-grid">
-      <div class="guide-item">
-        <h3>The Graph Protocol</h3>
-        <p>All data comes from decentralized subgraphs indexed on The Graph Network. Queries go through the Gateway API to indexers staking GRT tokens.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Messari Standard Schema</h3>
-        <p>Protocols use Messari's standardized lending schema (versions 1.3.0 through 3.1.0). This dashboard uses only universal fields that exist across all versions.</p>
-      </div>
-      <div class="guide-item">
-        <h3>Update Frequency</h3>
-        <p>Subgraph data updates with each new block on each chain. Dashboard queries are live — every page load fetches the latest on-chain state.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="guide-enter">
+  <div class="guide-enter" style="margin-top:0;margin-bottom:32px;">
     <button class="btn" onclick="enterDashboard()">Enter Dashboard</button>
+  </div>
+
+  <div class="guide-section">
+    <h2>Protocols by Network</h2>
+    <div id="guide-protocols"></div>
+  </div>
+
+  <div class="guide-section">
+    <h2>Key Terms</h2>
+    <p style="color:var(--text2);font-size:13px;line-height:1.8;">
+      <strong>TVL</strong> — Total USD value locked &nbsp;&bull;&nbsp;
+      <strong>Supply APR</strong> — Annual rate earned by lenders &nbsp;&bull;&nbsp;
+      <strong>Borrow APR</strong> — Annual rate paid by borrowers &nbsp;&bull;&nbsp;
+      <strong>Liquidation</strong> — Forced repayment when collateral drops &nbsp;&bull;&nbsp;
+      <strong>Market</strong> — Single lending pool for one asset &nbsp;&bull;&nbsp;
+      <strong>DAU</strong> — Daily active wallets
+    </p>
   </div>
 </div>
 
@@ -290,6 +214,19 @@ const fmtDate = ts => new Date(ts * 1000).toLocaleDateString();
 const colors = ['#6366f1','#22c55e','#3b82f6','#eab308','#ef4444','#06b6d4','#f97316','#a855f7','#ec4899','#14b8a6','#84cc16','#f43f5e','#8b5cf6','#0ea5e9','#d946ef'];
 const spin = el => { if (el) el.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>'; };
 
+// Token icons via cryptocurrency-icons CDN (lowercase, real SVGs)
+const TOK_CDN = 'https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color';
+const NET_ICONS = { MAINNET:'eth', MATIC:'matic', ARBITRUM_ONE:'eth', AVALANCHE:'avax', BSC:'bnb', FANTOM:'ftm', OPTIMISM:'eth', BASE:'eth' };
+const netIcon = (network, cls='icon') => {
+  const t = NET_ICONS[network];
+  return t ? `<img class="${cls}" src="${TOK_CDN}/${t}.svg" alt="${network}" onerror="this.style.display='none'">` : '';
+};
+const tokIcon = (symbol, cls='icon') => {
+  if (!symbol) return '';
+  const s = symbol.toLowerCase().replace(/^w(?=eth|btc|matic|avax)/,''); // weth->eth etc
+  return `<img class="${cls}" src="${TOK_CDN}/${s}.svg" alt="${symbol}" onerror="this.style.display='none'">`;
+};
+
 let registry = [];
 let charts = {};
 const DEFAULT = 'aave-v3';
@@ -358,30 +295,22 @@ async function init() {
     chips.appendChild(c);
   });
 
-  // Populate guide page
+  // Populate guide: protocols grouped by network
   const guideProtos = $('#guide-protocols');
   if (guideProtos) {
-    const byProto = {};
+    const byNet = {};
     registry.forEach(r => {
-      if (!byProto[r.protocol]) byProto[r.protocol] = [];
-      byProto[r.protocol].push(r.network);
+      if (!byNet[r.network]) byNet[r.network] = new Set();
+      byNet[r.network].add(r.protocol);
     });
-    Object.entries(byProto).sort((a,b) => a[0].localeCompare(b[0])).forEach(([proto, nets]) => {
-      const el = document.createElement('div');
-      el.className = 'proto-item';
-      el.innerHTML = `<span class="name">${proto}</span><span class="net">${nets.join(', ')}</span>`;
-      guideProtos.appendChild(el);
-    });
-  }
-  const guideNets = $('#guide-networks');
-  if (guideNets) {
-    const networks = [...new Set(registry.map(r => r.network))].sort();
-    networks.forEach(n => {
-      const el = document.createElement('span');
-      el.className = 'badge-network';
-      el.style.cssText = 'font-size:13px;padding:6px 14px;';
-      el.textContent = n;
-      guideNets.appendChild(el);
+    // Sort networks by number of protocols (most first)
+    Object.entries(byNet).sort((a,b) => b[1].size - a[1].size).forEach(([net, protos]) => {
+      const group = document.createElement('div');
+      group.className = 'net-group';
+      group.innerHTML = `<h3>${netIcon(net,'icon-lg')} ${net} (${protos.size})</h3><div class="net-chips">${
+        [...protos].sort().map(p => `<span class="net-chip">${p}</span>`).join('')
+      }</div>`;
+      guideProtos.appendChild(group);
     });
   }
 }
@@ -436,7 +365,7 @@ async function loadOverview() {
       <thead><tr><th>Protocol</th><th>Network</th><th style="text-align:right">TVL</th><th style="text-align:right">Deposits</th><th style="text-align:right">Borrows</th><th style="text-align:right">Users</th><th style="text-align:right">Pools</th></tr></thead>
       <tbody>${protocols.map(p => `<tr>
         <td><strong>${p.slug}</strong></td>
-        <td><span class="badge-network">${p.network}</span></td>
+        <td><span class="badge-network">${netIcon(p.network,'icon-sm')} ${p.network}</span></td>
         <td style="text-align:right">${fmt(p.totalValueLockedUSD)}</td>
         <td style="text-align:right">${fmt(p.totalDepositBalanceUSD)}</td>
         <td style="text-align:right">${fmt(p.totalBorrowBalanceUSD)}</td>
@@ -500,7 +429,7 @@ async function loadProtocolDetail() {
         const br = m.rates?.find(r => r.side === 'BORROWER')?.rate;
         return `<tr>
           <td>${m.name || m.id.slice(0,10)}</td>
-          <td>${m.inputToken?.symbol || '?'}</td>
+          <td><span class="token-cell">${tokIcon(m.inputToken?.symbol)} ${m.inputToken?.symbol || '?'}</span></td>
           <td style="text-align:right">${fmt(m.totalValueLockedUSD)}</td>
           <td style="text-align:right">${fmt(m.totalDepositBalanceUSD)}</td>
           <td style="text-align:right">${fmt(m.totalBorrowBalanceUSD)}</td>
@@ -541,7 +470,7 @@ async function loadRates() {
         const br = m.rates?.find(r => r.side==='BORROWER');
         return `<tr>
           <td>${m.name || m.id.slice(0,10)}</td>
-          <td>${m.inputToken?.symbol || '?'}</td>
+          <td><span class="token-cell">${tokIcon(m.inputToken?.symbol)} ${m.inputToken?.symbol || '?'}</span></td>
           <td style="text-align:right">${fmt(m.totalValueLockedUSD)}</td>
           <td style="text-align:right" class="positive">${sr ? fmtPct(sr.rate) : '--'}</td>
           <td style="text-align:right" class="negative">${br ? fmtPct(br.rate) : '--'}</td>
@@ -629,7 +558,7 @@ async function loadComparison() {
       <thead><tr><th>Protocol</th><th>Network</th><th style="text-align:right">TVL</th><th style="text-align:right">Deposits</th><th style="text-align:right">Borrows</th><th style="text-align:right">Users</th><th style="text-align:right">Pools</th></tr></thead>
       <tbody>${data.map(d => `<tr>
         <td><strong>${d.slug || d.protocol}</strong></td>
-        <td><span class="badge-network">${d.network}</span></td>
+        <td><span class="badge-network">${netIcon(d.network,'icon-sm')} ${d.network}</span></td>
         <td style="text-align:right">${fmt(d.totalValueLockedUSD)}</td>
         <td style="text-align:right">${fmt(d.totalDepositBalanceUSD)}</td>
         <td style="text-align:right">${fmt(d.totalBorrowBalanceUSD)}</td>
