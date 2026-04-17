@@ -6,13 +6,12 @@
 
 MCP server that exposes unified AI-friendly tools over [Messari's standardized lending subgraphs](https://github.com/messari/subgraphs) on [The Graph](https://thegraph.com/).
 
-One natural-language query → fan out across 40+ lending protocols on multiple chains → get back structured, comparable data.
-
+One natural-language query → fan out across 40+ lending protocols on 15 chains → get back structured, comparable data.
 
 ## Features
 
 - **19 MCP tools** covering protocols, markets, rates, positions, events, snapshots, and cross-protocol analytics
-- **40+ lending protocols** across Ethereum, Polygon, Arbitrum, Avalanche, BSC, Optimism, Base, and more
+- **90 subgraph deployments** across 40+ lending protocols on 15 chains (Ethereum, Polygon, Arbitrum, Avalanche, BSC, Optimism, Base, Scroll, Fantom, Gnosis, Moonbeam, and more)
 - **Cross-protocol comparison** — compare TVL, revenue, users across any set of protocols in one call
 - **Graceful failure handling** — dead subgraphs don't crash queries; failures are reported alongside successes
 - **Schema-version aware** — automatically selects compatible queries for v1.x, v2.x, and v3.x subgraphs
@@ -48,7 +47,23 @@ One natural-language query → fan out across 40+ lending protocols on multiple 
 - Node.js 18+
 - A Graph API key from [The Graph Studio](https://thegraph.com/studio/apikeys/)
 
-### Install & Build
+### Quick Start (npm)
+
+```json
+{
+  "mcpServers": {
+    "graph-lending": {
+      "command": "npx",
+      "args": ["graph-lending-mcp"],
+      "env": {
+        "GRAPH_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+### Install From Source
 
 ```bash
 git clone https://github.com/PaulieB14/graph-lending-mcp.git
@@ -57,9 +72,7 @@ npm install
 npx tsc
 ```
 
-### Configure in Claude Desktop
-
-Add to your `claude_desktop_config.json`:
+Then add to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -74,31 +87,17 @@ Add to your `claude_desktop_config.json`:
   }
 }
 ```
-
-## Architecture
-
-```
 src/
 ├── index.ts          # MCP server entry — registers all 19 tools
 ├── registry.ts       # Protocol → subgraph ID mapping (see SUBGRAPHS.md)
 ├── client.ts         # GraphQL fetch with retry, timeout, fan-out
 ├── queries.ts        # All GraphQL query constants
 └── tools/
-    ├── protocol.ts   # list_protocols, get_protocol
-    ├── markets.ts    # get_markets, get_market
-    ├── rates.ts      # get_interest_rates
-    ├── positions.ts  # get_account, get_positions
-    ├── events.ts     # deposits, borrows, repays, withdrawals, liquidations, flashloans
-    ├── snapshots.ts  # daily_financials, market_snapshots, usage_metrics
-    └── cross.ts      # compare_protocols, top_markets_by_tvl
-```
-
-All queries use Messari's [standardized lending schema](https://github.com/messari/subgraphs/tree/master/subgraphs) — same entities and fields across every protocol.
-
-## Subgraph Registry
-
-See [SUBGRAPHS.md](SUBGRAPHS.md) for the full list of registered subgraphs with their status, network, schema version, and notes.
-
-## License
-
-MIT
+├── protocol.ts   # list_protocols, get_protocol
+├── markets.ts    # get_markets, get_market
+├── rates.ts      # get_interest_rates
+├── positions.ts  # get_account, get_positions
+├── events.ts     # deposits, borrows, repays, withdrawals, liquidations, flashloans
+├── snapshots.ts  # daily_financials, market_snapshots, usage_metrics
+└── cross.ts      # compare_protocols, top_markets_by_tvl
+## Architecture
