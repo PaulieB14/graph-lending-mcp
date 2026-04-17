@@ -87,6 +87,8 @@ Then add to your `claude_desktop_config.json`:
   }
 }
 ```
+## Architecture
+
 src/
 ├── index.ts          # MCP server entry — registers all 19 tools
 ├── registry.ts       # Protocol → subgraph ID mapping (see SUBGRAPHS.md)
@@ -101,7 +103,7 @@ src/
     ├── snapshots.ts  # daily_financials, market_snapshots, usage_metrics
     └── cross.ts      # compare_protocols, top_markets_by_tvl
 
-## Architecture
+
 All queries use Messari's [standardized lending schema](https://github.com/messari/subgraphs/tree/master/subgraphs) — same entities and fields across every protocol.
 
 ## Subgraph Registry
