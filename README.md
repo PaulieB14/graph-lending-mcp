@@ -102,7 +102,7 @@ src/
     ├── events.ts     # deposits, borrows, repays, withdrawals, liquidations, flashloans
     ├── snapshots.ts  # daily_financials, market_snapshots, usage_metrics
     └── cross.ts      # compare_protocols, top_markets_by_tvl
-
+```
 
 All queries use Messari's [standardized lending schema](https://github.com/messari/subgraphs/tree/master/subgraphs) — same entities and fields across every protocol.
 
