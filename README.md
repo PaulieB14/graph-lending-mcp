@@ -93,11 +93,22 @@ src/
 ├── client.ts         # GraphQL fetch with retry, timeout, fan-out
 ├── queries.ts        # All GraphQL query constants
 └── tools/
-├── protocol.ts   # list_protocols, get_protocol
-├── markets.ts    # get_markets, get_market
-├── rates.ts      # get_interest_rates
-├── positions.ts  # get_account, get_positions
-├── events.ts     # deposits, borrows, repays, withdrawals, liquidations, flashloans
-├── snapshots.ts  # daily_financials, market_snapshots, usage_metrics
-└── cross.ts      # compare_protocols, top_markets_by_tvl
+    ├── protocol.ts   # list_protocols, get_protocol
+    ├── markets.ts    # get_markets, get_market
+    ├── rates.ts      # get_interest_rates
+    ├── positions.ts  # get_account, get_positions
+    ├── events.ts     # deposits, borrows, repays, withdrawals, liquidations, flashloans
+    ├── snapshots.ts  # daily_financials, market_snapshots, usage_metrics
+    └── cross.ts      # compare_protocols, top_markets_by_tvl
+---
+
 ## Architecture
+All queries use Messari's [standardized lending schema](https://github.com/messari/subgraphs/tree/master/subgraphs) — same entities and fields across every protocol.
+
+## Subgraph Registry
+
+See [SUBGRAPHS.md](SUBGRAPHS.md) for the full list of 90 registered subgraph deployments with their status, network, schema version, and notes.
+
+## License
+
+MIT
